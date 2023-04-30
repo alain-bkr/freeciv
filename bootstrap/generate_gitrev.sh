@@ -9,7 +9,7 @@
 #              $2 - output file
 #
 
-# Absolete paths
+# Absolute paths
 SRCROOT="$(cd "$1" ; pwd)"
 INPUTDIR="$(cd "$1/bootstrap" ; pwd)"
 OUTPUTFILE="$2"
@@ -17,6 +17,8 @@ OUTPUTFILE="$2"
 REVSTATE="OFF"
 REV1=""
 REV2="dist"
+EXT1=""
+EXT2=""
 
 (cd "$INPUTDIR"
  # Check that all commands required by this script are available
@@ -26,21 +28,29 @@ REV2="dist"
     command -v tail >/dev/null &&
     command -v head >/dev/null &&
     command -v sed >/dev/null &&
-    command -v wc >/dev/null ; then
-   REVTMP="$(git rev-parse --short HEAD 2>/dev/null)"
-   if test "x$REVTMP" != "x" ; then
+    command -v awk >/dev/null &&
+    command -v grep >/dev/null ; then
+
+   BRANCH="origin/$(cd "$SRCROOT"; git branch|grep '^*'|sed -e 's:[/ (),*]: :g' |awk '{ print $NR }' 2>/dev/null)"
+   ORIGIN="$(cd "$SRCROOT"; git rev-parse --short $BRANCH 2>/dev/null)"
+   HEAD="$(cd "$SRCROOT"; git rev-parse --short HEAD 2>/dev/null)"
+
+   if test "x$HEAD" != "x" ; then
      # This is git repository. Check for local modifications
-     if (cd "$SRCROOT" ; git diff --quiet); then
-       REVSTATE=ON
-       REV2="$REVTMP"
+     if (cd "$SRCROOT" ; git diff $BRANCH --quiet); then
+       REVSTATE="ON $BRANCH $ORIGIN "
+       REV2="HEAD $HEAD"
      else
        REVSTATE=MOD
-       #REV1="modified "
-       #REV2="$REVTMP"
-       ORIGIN="origin/$(git branch|head -1|sed -e 's:[/ (),*]::g' 2>/dev/null)"
-
-       REV1="$ORIGIN $(git rev-parse --short $ORIGIN), "
-       REV2="modified $REVTMP"
+       COUNT=$(git rev-list --count HEAD ^$ORIGIN)
+       if [ "$COUNT" != "0" ]; then
+            EXT1="(+$COUNT)"
+       fi
+       if [ "$(cd "$SRCROOT" ; git diff $HEAD --quiet; echo $?)" != "0" ] ; then
+            EXT2="+ modified"
+       fi
+       REV1="$BRANCH $ORIGIN "
+       REV2="HEAD $HEAD $EXT1 $EXT2"
      fi
    fi
  fi
