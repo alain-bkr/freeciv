@@ -24,6 +24,8 @@ REV2="dist"
  # (REVSTATE will be OFF)
  if command -v git >/dev/null &&
     command -v tail >/dev/null &&
+    command -v head >/dev/null &&
+    command -v sed >/dev/null &&
     command -v wc >/dev/null ; then
    REVTMP="$(git rev-parse --short HEAD 2>/dev/null)"
    if test "x$REVTMP" != "x" ; then
@@ -33,8 +35,12 @@ REV2="dist"
        REV2="$REVTMP"
      else
        REVSTATE=MOD
-       REV1="modified "
-       REV2="$REVTMP"
+       #REV1="modified "
+       #REV2="$REVTMP"
+       ORIGIN="origin/$(git branch|head -1|sed -e 's:[/ (),*]::g' 2>/dev/null)"
+
+       REV1="$ORIGIN $(git rev-parse --short $ORIGIN), "
+       REV2="modified $REVTMP"
      fi
    fi
  fi
