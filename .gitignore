@@ -36,3 +36,9 @@
 /core
 /libtool
 /freeciv-CI.log
+/build*
+/run*
+*orig
+*patch
+*diff
+/.gitignore
